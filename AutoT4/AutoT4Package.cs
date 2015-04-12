@@ -20,7 +20,7 @@ namespace BennorMcCarthy.AutoT4
     [PackageRegistration(UseManagedResourcesOnly = true)]
     [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)]
     [Guid(GuidList.guidAutoT4PkgString)]
-    [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExists_string)]
+    [ProvideAutoLoad(UIContextGuids.SolutionExists)]
     public sealed class AutoT4Package : Package
     {
         private DTE _dte;
@@ -29,18 +29,28 @@ namespace BennorMcCarthy.AutoT4
         private AutoT4ExtenderProvider _extenderProvider;
         private readonly List<int> _extenderProviderCookies = new List<int>();
 
+        public AutoT4Package()
+        {
+            Debug.WriteLine("Entering constructor for: {0}", this.GetType().FullName);
+        }
+
         protected override void Initialize()
         {
+            Debug.WriteLine("Entering Initialize() of: {0}", this.GetType().FullName);
+
             base.Initialize();
 
-            _dte = GetService(typeof(SDTE)) as DTE;
+            _dte = (DTE)GetService(typeof(DTE));
             if (_dte == null)
                 return;
 
-            RegisterExtenderProvider(VSConstants.CATID.CSharpFileProperties_string);
-            RegisterExtenderProvider(VSConstants.CATID.VBFileProperties_string);
+            var window = _dte.Windows.Item(EnvDTE.Constants.vsWindowKindOutput);
+
 
             RegisterEvents();
+
+            RegisterExtenderProvider(VSConstants.CATID.CSharpFileProperties_string);
+            RegisterExtenderProvider(VSConstants.CATID.VBFileProperties_string);
         }
 
         private void RegisterEvents()
@@ -58,7 +68,7 @@ namespace BennorMcCarthy.AutoT4
             if (_objectExtenders == null)
                 return;
 
-            _extenderProvider = _extenderProvider ?? new AutoT4ExtenderProvider(_dte);
+            _extenderProvider = _extenderProvider ?? new AutoT4ExtenderProvider(_dte, this);
             _extenderProviderCookies.Add(_objectExtenders.RegisterExtenderProvider(catId, name, _extenderProvider));
         }
 

@@ -1,37 +1,39 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using EnvDTE;
 using Microsoft.VisualStudio.Shell.Interop;
 
 namespace BennorMcCarthy.AutoT4
 {
+    [Guid(ExtenderGuid)]
     public class AutoT4ExtenderProvider : IExtenderProvider
     {
+        public const string ExtenderGuid = "174D1A83-20C0-4783-AD6B-032929BEC4B1";
         public const string Name = "AutoT4ExtenderProvider";
 
         private readonly DTE _dte;
+        private readonly IServiceProvider _serviceProvider;
 
-        public AutoT4ExtenderProvider(DTE dte)
+        public AutoT4ExtenderProvider(DTE dte, IServiceProvider serviceProvider)
         {
-            if (dte == null)
-                throw new ArgumentNullException("dte");
-
             _dte = dte;
+            _serviceProvider = serviceProvider;
         }
 
-        public object GetExtender(string extenderCatId, string extenderName, object extendeeObject, IExtenderSite extenderSite, int cookie)
+        public object GetExtender(string extenderCATID, string extenderName, object extendeeObject, IExtenderSite extenderSite, int cookie)
         {
-            if (!CanExtend(extenderCatId, extenderName, extendeeObject))
+            dynamic extendee = extendeeObject;
+            string fullPath = extendee.FullPath;
+            var projectItem = _dte.Solution.FindProjectItem(fullPath);
+            IVsSolution solution = (IVsSolution) _serviceProvider.GetService(typeof(SVsSolution));
+            IVsHierarchy projectHierarchy;
+            if (solution.GetProjectOfUniqueName(projectItem.ContainingProject.UniqueName, out projectHierarchy) != 0)
+                return null;
+            uint itemId;
+            if (projectHierarchy.ParseCanonicalName(fullPath, out itemId) != 0)
                 return null;
 
-            var fileProperties = extendeeObject as VSLangProj.FileProperties;
-            if (fileProperties == null)
-                return null;
-
-            var item = _dte.Solution.FindProjectItem(fileProperties.FullPath);
-            if (item == null)
-                return null;
-
-            return new AutoT4Extender(item, extenderSite, cookie);
+            return new AutoT4Extender(projectItem, extenderSite, cookie);
         }
 
         public bool CanExtend(string extenderCatid, string extenderName, object extendeeObject)

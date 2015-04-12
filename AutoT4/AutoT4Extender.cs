@@ -1,5 +1,6 @@
 ﻿using EnvDTE;
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 
 namespace BennorMcCarthy.AutoT4
@@ -7,11 +8,10 @@ namespace BennorMcCarthy.AutoT4
     [CLSCompliant(false)]
     [ComVisible(true)]
     [ClassInterface(ClassInterfaceType.None)]
-    public sealed class AutoT4Extender : AutoT4ProjectItemSettings, IDisposable
+    public sealed class AutoT4Extender : AutoT4ProjectItemSettings
     {
         private readonly IExtenderSite _extenderSite;
         private readonly int _cookie;
-        private bool _disposed;
 
         public AutoT4Extender(ProjectItem item, IExtenderSite extenderSite, int cookie)
             :base(item)
@@ -25,27 +25,15 @@ namespace BennorMcCarthy.AutoT4
 
         ~AutoT4Extender()
         {
-            Dispose(false);
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-
-            // take the instance off of the finalization queue.
-            GC.SuppressFinalize(this);
-        }
-
-        private void Dispose(bool disposing)
-        {
-            if (_disposed)
-                return;
-            _disposed = true;
-
-            if (!disposing || _cookie == 0)
-                return;
-
-            _extenderSite.NotifyDelete(_cookie);
+            try
+            {
+                if (_extenderSite != null)
+                    _extenderSite.NotifyDelete(_cookie);
+            }
+            catch(Exception ex)
+            {
+                Debug.WriteLine("Error in PropertyExtender finalizer: {0}", ex);
+            }
         }
     }
 }

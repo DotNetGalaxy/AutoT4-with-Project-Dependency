@@ -10,7 +10,7 @@ namespace BennorMcCarthy.AutoT4
     [ClassInterface(ClassInterfaceType.None)]
     public class AutoT4ProjectItemSettings : ProjectItemSettings
     {
-        private const BuildEvent DefaultRunOnBuildSetting = BuildEvent.BeforeBuild;
+        private const BuildEvent DefaultRunOnBuildSetting = BuildEvent.AfterBuild;
 
         public AutoT4ProjectItemSettings(ProjectItem item)
             : base(item, "AutoT4") { }
@@ -33,7 +33,7 @@ namespace BennorMcCarthy.AutoT4
             var newRunOnBuildValue = DefaultRunOnBuildSetting;
             bool previousRunOnBuild;
             if (bool.TryParse(value, out previousRunOnBuild))
-                newRunOnBuildValue = previousRunOnBuild ? BuildEvent.BeforeBuild : BuildEvent.DoNotRun;
+                newRunOnBuildValue = previousRunOnBuild ? BuildEvent.AfterBuild : BuildEvent.DoNotRun;
 
             //coercion was needed, therefore the new value needs to be assigned so that it gets migrated in the settings
             RunOnBuild = newRunOnBuildValue;
