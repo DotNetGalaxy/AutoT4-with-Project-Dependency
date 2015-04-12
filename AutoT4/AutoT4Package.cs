@@ -1,19 +1,12 @@
-﻿using System;
-using System.Diagnostics;
-using System.Globalization;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.ComponentModel.Design;
-using Microsoft.Win32;
+﻿using EnvDTE;
 using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
-using EnvDTE;
-using System.Linq;
+using Microsoft.VisualStudio.Shell.Interop;
+using System;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
-using VSLangProj;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace BennorMcCarthy.AutoT4
 {
@@ -28,6 +21,7 @@ namespace BennorMcCarthy.AutoT4
         private ObjectExtenders _objectExtenders;
         private AutoT4ExtenderProvider _extenderProvider;
         private readonly List<int> _extenderProviderCookies = new List<int>();
+        private HashSet<string> successfullProjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         public AutoT4Package()
         {
@@ -58,6 +52,7 @@ namespace BennorMcCarthy.AutoT4
             _buildEvents = _dte.Events.BuildEvents;
             _buildEvents.OnBuildBegin += OnBuildBegin;
             _buildEvents.OnBuildDone += OnBuildDone;
+            _buildEvents.OnBuildProjConfigDone += OnBuildProjConfigDone;
         }
 
         private void RegisterExtenderProvider(string catId)
@@ -74,6 +69,7 @@ namespace BennorMcCarthy.AutoT4
 
         private void OnBuildBegin(vsBuildScope Scope, vsBuildAction Action)
         {
+            successfullProjects.Clear();
             RunTemplates(Scope, BuildEvent.BeforeBuild);
         }
 
@@ -82,11 +78,17 @@ namespace BennorMcCarthy.AutoT4
             RunTemplates(Scope, BuildEvent.AfterBuild);
         }
 
+        private void OnBuildProjConfigDone(string Project, string ProjectConfig, string Platform, string SolutionConfig, bool Success)
+        {
+            if (Success)
+                successfullProjects.Add(Project);
+        }
+
         private void RunTemplates(vsBuildScope scope, BuildEvent buildEvent)
         {
-            _dte.GetProjectsWithinBuildScope(scope)
+            _dte.GetProjectsWithinBuildScope(vsBuildScope.vsBuildScopeSolution)
                 .FindT4ProjectItems()
-                .ThatShouldRunOn(buildEvent)
+                .ThatShouldRunOn(buildEvent, successfullProjects)
                 .ToList()
                 .ForEach(item => item.RunTemplate());
         }
@@ -101,6 +103,7 @@ namespace BennorMcCarthy.AutoT4
             {
                 _buildEvents.OnBuildBegin -= OnBuildBegin;
                 _buildEvents.OnBuildDone -= OnBuildDone;
+                _buildEvents.OnBuildProjConfigDone -= OnBuildProjConfigDone;
                 _buildEvents = null;
             }
             return result;

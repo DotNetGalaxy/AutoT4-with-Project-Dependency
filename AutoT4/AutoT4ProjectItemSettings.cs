@@ -15,6 +15,16 @@ namespace BennorMcCarthy.AutoT4
         public AutoT4ProjectItemSettings(ProjectItem item)
             : base(item, "AutoT4") { }
 
+        [DefaultValue("")]
+        [DisplayName("Depends on project")]
+        [Category("AutoT4")]
+        [Description("Run only if specified project is built succesfully")]
+        public string DependsOnProject
+        {
+            get { return Get("", null); }
+            set { Set(value); }
+        }
+
         [DefaultValue(DefaultRunOnBuildSetting)]
         [DisplayName("Run on build")]
         [Category("AutoT4")]
