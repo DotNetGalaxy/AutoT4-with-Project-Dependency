@@ -22,6 +22,7 @@ namespace BennorMcCarthy.AutoT4
         private AutoT4ExtenderProvider _extenderProvider;
         private readonly List<int> _extenderProviderCookies = new List<int>();
         private HashSet<string> successfullProjects = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private bool isCompiling;
 
         public AutoT4Package()
         {
@@ -69,13 +70,19 @@ namespace BennorMcCarthy.AutoT4
 
         private void OnBuildBegin(vsBuildScope Scope, vsBuildAction Action)
         {
+            this.isCompiling = Action == vsBuildAction.vsBuildActionBuild ||
+                Action == vsBuildAction.vsBuildActionRebuildAll;
+
             successfullProjects.Clear();
-            RunTemplates(Scope, BuildEvent.BeforeBuild);
+
+            if (isCompiling)
+                RunTemplates(Scope, BuildEvent.BeforeBuild);
         }
 
         private void OnBuildDone(vsBuildScope Scope, vsBuildAction Action)
         {
-            RunTemplates(Scope, BuildEvent.AfterBuild);
+            if (isCompiling)
+                RunTemplates(Scope, BuildEvent.AfterBuild);
         }
 
         private void OnBuildProjConfigDone(string Project, string ProjectConfig, string Platform, string SolutionConfig, bool Success)
