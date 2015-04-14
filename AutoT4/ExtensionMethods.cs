@@ -38,7 +38,9 @@ namespace BennorMcCarthy.AutoT4
             var item = new AutoT4ProjectItemSettings(projectItem);
             return (item.RunOnBuild == whenToRun &&
                 (string.IsNullOrWhiteSpace(item.DependsOnProject) ||
-                 (successfullProjects != null && successfullProjects.Contains(item.DependsOnProject.Trim()))));
+                 (successfullProjects != null &&
+                  (successfullProjects.Contains(item.DependsOnProject) ||
+                   successfullProjects.Any(x => x.Contains(item.DependsOnProject))))));
         }
 
         public static void RunTemplate(this ProjectItem template)

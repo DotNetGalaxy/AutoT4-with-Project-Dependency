@@ -22,7 +22,7 @@ namespace BennorMcCarthy.AutoT4
         public string DependsOnProject
         {
             get { return Get("", null); }
-            set { Set(value); }
+            set { Set(value != null ? value.Trim() : null); }
         }
 
         [DefaultValue(DefaultRunOnBuildSetting)]
